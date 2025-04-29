@@ -139,62 +139,126 @@ function get_sessions( $base_url ) {
 	}
 }
 
-function wptv_sessions_func( $atts ){
-	global $wptv_base_url, $wptv_speakers, $wptv_sessions;
+function render_output($sessions) {
+    $output = '';
+    $row = 8;
+    
+    foreach($sessions as $session) {
+        // Escape content to avoid issues with special characters
+        $content = str_replace(["\n", "\r", "\t"], [' ', ' ', ' '], $session['content']);
+        $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
+        
+        // Build line with tabs as separators
+        $line = "\tPending\t\t\t" . $session['date'] . "\t\t\t" . 
+                $session['speakers'] . "\t" . $session['title'] . "\t" .
+                '= IF( ISBLANK(H'.$row.'), "", CONCAT(CONCAT(H'.$row.',": "), I'.$row.') )' . "\t" .
+                $content . "\n";
+        
+        $output .= $line;
+        $row++;
+    }
+    
+    return '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $output . '</textarea>';
+}
 
-	$wptv_post_wordcamp_url = filter_input( INPUT_POST, 'wordcamp_url' );
+function sanitize_wordcamp_url($wordcamp_url) {
+    $wordcamp_url = filter_input(INPUT_POST, $wordcamp_url, FILTER_SANITIZE_URL);
+    
+    if (empty($wordcamp_url)) {
+        return false;
+    }
 
-	?>
-	<p>Please enter a WorCamp website URL<br>
-	for example: https://zaragoza.wordcamp.org/2025/</p>
-	<form method="post" action="">
-		<input type="text" size="50" id="wordcamp_url" name="wordcamp_url" value="<?php echo esc_url($wptv_post_wordcamp_url) ?>">
-		<input type="submit">
-	</form>
-	<?php
+    // Add https:// if missing
+    if (strpos($wordcamp_url, 'https://') !== 0) {
+        $wordcamp_url = 'https://' . $wordcamp_url;
+    }
 
-	ob_start();
+    // Extract base URL according to format
+    if (preg_match('/^(https:\/\/[^\/]+\.wordcamp\.org\/\d{4})/', $wordcamp_url, $matches)) {
+        // wordcamp.org format - only up to year
+        $wordcamp_url = $matches[1];
+    } elseif (preg_match('/^(https:\/\/events\.wordpress\.org\/[^\/]+\/\d{4}\/[^\/]+)/', $wordcamp_url, $matches)) {
+        // events.wordpress.org format - up to event slug
+        $wordcamp_url = $matches[1];
+    }
 
+    // Add trailing slash if missing
+    if (substr($wordcamp_url, -1) !== '/') {
+        $wordcamp_url .= '/';
+    }
 
-	if ( ! isset($_POST['wordcamp_url'] ) ) {
-		return;
-	}
-	if ( ! $wptv_post_wordcamp_url ) {
+    return $wordcamp_url;
+}
 
-		return 'You have to provide a valid WordCamp URL';
-	}
+function wptv_sessions_func($atts) {
+    global $wptv_base_url, $wptv_speakers, $wptv_sessions;
 
-	$wptv_base_url = $wptv_post_wordcamp_url;
+    // Get WordCamp URL from form
+    $wordcamp_url = sanitize_wordcamp_url('wordcamp_url');
 
-	if ( ! $wptv_speakers = get_speakers( $wptv_base_url ) ) {
-		return 'Can\'t retieve speakers list';
-	}
+    // Display input form
+    ?>
+	<style>
+		#wptv-sessions-form {
+			display: flex;
+			flex-direction: row;
+			gap: 10px;
+		}
+		#wptv-sessions-form input[type="text"] {
+			flex: 2;
+		}
+		#wptv-sessions-form input[type="submit"] {
+			flex: 1;
+		}
+	</style>
+    <div class="wptv-form-container">
+        <p>Please enter a WordCamp website URL<br>
+        <p>Examples:<br>
+			https://zaragoza.wordcamp.org/2025/<br>
+			https://events.wordpress.org/lleida/2025/disseny/</p>
+        <form method="post" action="" id="wptv-sessions-form">
+            <input type="text" 
+                   size="50" 
+                   id="wordcamp_url" 
+                   name="wordcamp_url" 
+                   value="<?php echo esc_url($wordcamp_url); ?>"
+                   placeholder="https://wordcamp.org/YYYY/">
+            <input type="submit" value="Get Sessions">
+        </form>
+    </div>
+    <?php
 
-	if ( ! $wptv_speakers = get_speakers( $wptv_base_url ) ) {
-		return 'Can\'t retieve speakers list';
-	}
-	// var_dump( $wptv_speakers );
+    // Start output buffer
+    ob_start();
 
-	if ( ! $wptv_sessions = get_sessions( $wptv_base_url ) ) {
-		return 'Can\'t retieve sessions list';
-	}
+    // Validations
+    if (!isset($_POST['wordcamp_url'])) {
+        return ob_get_clean();
+    }
 
-	
-	
-	echo '<div id="wptv_sessions_table"><table>';
+    if (empty($wordcamp_url)) {
+        return 'You have to provide a valid WordCamp URL';
+    }
 
-	$row = 8;
-	
-	foreach( $wptv_sessions as $session ) {
-		echo "<tr><td>&nbsp;</td><td>Pending</td><td></td><td></td><td>", $session['date'] . "</td><td></td><td></td><td>" . $session['speakers'] . "</td><td>" . $session['title'] . "</td><td>".'= IF( ISBLANK(H'.$row.'), "", CONCAT(CONCAT(H'.$row.',": "), I'.$row.') )'."</td><td>" . $session['content'] . "</td></tr>";
-		$row++;
-	}
+    // Set base URL
+    $wptv_base_url = $wordcamp_url;
 
-	echo '</table></div>';
+    // Get speakers
+    $wptv_speakers = get_speakers($wptv_base_url);
+    if (!$wptv_speakers) {
+        return 'Cannot retrieve speakers list';
+    }
 
+    // Get sessions
+    $wptv_sessions = get_sessions($wptv_base_url);
+    if (!$wptv_sessions) {
+        return 'Cannot retrieve sessions list';
+    }
 
-	
-	return ob_get_clean();
+    // Render output
+    echo render_output($wptv_sessions);
+    
+    return ob_get_clean();
 }
 
 $wptv_base_url = '';
