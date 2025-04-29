@@ -114,6 +114,7 @@ function get_sessions( $base_url ) {
 	    	$session = array();
 
 	    	$session['date'] = date('d/m/Y', $post->meta->_wcpt_session_time);
+	    	$session['timestamp'] = intval($post->meta->_wcpt_session_time);
 	    	$session['title'] = $post->title->rendered;
 	    	$session['content'] = wptv_clean_content($post->content->rendered);
 	    	$session_speakers = array();
@@ -131,6 +132,9 @@ function get_sessions( $base_url ) {
 
 	        $sessions[] = $session;
 	    }
+	    usort($sessions, function($a, $b) {
+	        return $a['timestamp'] - $b['timestamp'];
+	    });
 	    return $sessions;
 	}
 }
