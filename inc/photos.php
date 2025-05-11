@@ -94,7 +94,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $output .= $output_row['event_name'] . "\t";
             $output .= $output_row['event_subject'] . "\t";
             $output .= $output_row['speaker_name'] . "\t";
-            $output .= $output_row['event_description'] . "\n";
+            $output .= $output_row['event_description'] . "\t";
             $output .= $output_row['mkdir'] . "\n";
         }
         $output = '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $output . '</textarea>';
