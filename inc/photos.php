@@ -42,24 +42,30 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
         // Create DateTime object with timezone
         $datetime = new DateTime('@' . $session['timestamp']);
         $datetime->setTimezone($timezone);
+        $event_name = $weekdays[$datetime->format('l')];
+
 
         if ($last_date != $session['date']) {
+            $folder = $datetime->format('Ymd') . '__misc';
             $output_rows[] = array(
-                'folder' => $datetime->format('Ymd') . '__misc',
-                'event_name' => $weekdays[$datetime->format('l')],
+                'folder' => $folder,
+                'event_name' => $event_name,
                 'event_subject' => '',
                 'speaker_name' => '',
-                'event_description' => ''
+                'event_description' => '',
+                'mkdir' => 'mkdir ' . $event_name . ' && mkdir ' . $folder
             );
             $last_date = $session['date'];
         }
 
+        $folder = $datetime->format('Ymd') . '_' . $session['track'] . '_' . $datetime->format('Hi');
         $output_rows[] = array(
-            'folder' => $datetime->format('Ymd') . '_' . $session['track'] . '_' . $datetime->format('Hi'),
+            'folder' => $folder,
             'event_name' => $weekdays[$datetime->format('l')],
             'event_subject' => $session['title'],
             'speaker_name' => $session['speakers'],
-            'event_description' => ''
+            'event_description' => '',
+            'mkdir' => 'mkdir ' . $event_name . '/' . $folder
         );
     }
     // sort output_rows by folder alphabetically
@@ -70,7 +76,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
     // Add formulas after sorting
     $row = 4;
     foreach($output_rows as &$output_row) {
-        if (strpos($output_row['folder'], '__misc') !== false) {
+        if (empty($output_row['event_subject'])) {
             $row++;
             continue;
         }
@@ -89,6 +95,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $output .= $output_row['event_subject'] . "\t";
             $output .= $output_row['speaker_name'] . "\t";
             $output .= $output_row['event_description'] . "\n";
+            $output .= $output_row['mkdir'] . "\n";
         }
         $output = '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $output . '</textarea>';
     } else {
