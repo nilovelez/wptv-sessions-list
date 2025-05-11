@@ -38,7 +38,6 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
 
     $output_rows = array();
     $last_date = '';
-    $row = 4;
     foreach($sessions as $session) {
         // Create DateTime object with timezone
         $datetime = new DateTime('@' . $session['timestamp']);
@@ -53,7 +52,6 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
                 'event_description' => ''
             );
             $last_date = $session['date'];
-            $row++;
         }
 
         $output_rows[] = array(
@@ -61,14 +59,24 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             'event_name' => $weekdays[$datetime->format('l')],
             'event_subject' => $session['title'],
             'speaker_name' => $session['speakers'],
-            'event_description' => '= IF( ISBLANK(D'.$row.'), C'.$row.', CONCAT(CONCAT(D'.$row.',": "), C'.$row.') )'
+            'event_description' => ''
         );
-        $row++;
     }
     // sort output_rows by folder alphabetically
     usort($output_rows, function($a, $b) {
         return strcmp($a['folder'], $b['folder']);
     });
+
+    // Add formulas after sorting
+    $row = 4;
+    foreach($output_rows as &$output_row) {
+        if (strpos($output_row['folder'], '__misc') !== false) {
+            $row++;
+            continue;
+        }
+        $output_row['event_description'] = '= IF( ISBLANK(D'.$row.'), C'.$row.', CONCAT(CONCAT(D'.$row.',": "), C'.$row.') )';
+        $row++;
+    }
 
     if ($output_type == 'google_sheets') {
         
