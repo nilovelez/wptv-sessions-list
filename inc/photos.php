@@ -46,19 +46,19 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
 
 
         if ($last_date != $session['date']) {
-            $folder = '__misc';
+            $folder = '0000__misc';
             $output_rows[] = array(
                 'folder' => $folder,
                 'event_name' => $event_name,
                 'event_subject' => '',
                 'speaker_name' => '',
                 'event_description' => '',
-                'mkdir' => 'mkdir ' . $event_name . ' && mkdir ' . $folder
+                'mkdir' => 'mkdir ' . $event_name . ' && mkdir ' . $event_name . '/' . $folder
             );
             $last_date = $session['date'];
         }
 
-        $folder = $session['track'] . '_' . $datetime->format('Hi') . '_' . explode(' ', $session['speakers'])[0];
+        $folder = $datetime->format('Hi') . '_' . $session['track'] . '_' . explode(' ', $session['speakers'])[0];
         $output_rows[] = array(
             'folder' => $folder,
             'event_name' => $event_name,
@@ -87,11 +87,12 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
         $output_row['event_description'] = '= IF( ISBLANK(D'.$row.'), C'.$row.', CONCAT(CONCAT(D'.$row.',": "), C'.$row.') )';
         $row++;
     }
+    unset($output_row); // We clean the reference
 
     if ($output_type == 'google_sheets') {
         
         $output = "//$$\tEvents\t\t\t\n";
-        $output .= "//==\t{foldernum}\t\t\t\n";
+        $output .= "//==\t{folder}\t\t\t\n";
         $output .= "//##\tEventName\tEventSubject\tSpeakerName\tEventDescription\n"; 
         foreach($output_rows as $output_row) {
             $output .= $output_row['folder'] . "\t";
