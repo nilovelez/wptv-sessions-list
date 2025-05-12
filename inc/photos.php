@@ -42,11 +42,11 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
         // Create DateTime object with timezone
         $datetime = new DateTime('@' . $session['timestamp']);
         $datetime->setTimezone($timezone);
-        $event_name = $weekdays[$datetime->format('l')];
+        $event_name = $datetime->format('Ymd');
 
 
         if ($last_date != $session['date']) {
-            $folder = $datetime->format('Ymd') . '__misc';
+            $folder = '__misc';
             $output_rows[] = array(
                 'folder' => $folder,
                 'event_name' => $event_name,
@@ -58,18 +58,22 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $last_date = $session['date'];
         }
 
-        $folder = $datetime->format('Ymd') . '_' . $session['track'] . '_' . $datetime->format('Hi');
+        $folder = $session['track'] . '_' . $datetime->format('Hi') . '_' . explode(' ', $session['speakers'])[0];
         $output_rows[] = array(
             'folder' => $folder,
-            'event_name' => $weekdays[$datetime->format('l')],
+            'event_name' => $event_name,
             'event_subject' => $session['title'],
             'speaker_name' => $session['speakers'],
             'event_description' => '',
             'mkdir' => 'mkdir ' . $event_name . '/' . $folder
         );
     }
-    // sort output_rows by folder alphabetically
+    // sort output_rows by event_name and then by folder
     usort($output_rows, function($a, $b) {
+        $event_name_cmp = strcmp($a['event_name'], $b['event_name']);
+        if ($event_name_cmp !== 0) {
+            return $event_name_cmp;
+        }
         return strcmp($a['folder'], $b['folder']);
     });
 
