@@ -46,7 +46,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
 
 
         if ($last_date != $session['date']) {
-            $folder = '0000__misc';
+            $folder = '0000_'. $event_name . '_misc';
             $output_rows[] = array(
                 'folder' => $folder,
                 'event_name' => $event_name,
@@ -58,7 +58,12 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $last_date = $session['date'];
         }
 
-        $folder = $datetime->format('Hi') . '_' . $session['track'] . '_' . explode(' ', $session['speakers'])[0];
+        $folder = $datetime->format('Hi') . '_' . $session['track'] . '_';
+        if( !empty($session['speakers'][0]) ) {
+            $folder .= explode(' ', $session['speakers'][0])[0];
+        }else{
+            $folder .= explode(' ', $session['title'])[0];
+        }
         $output_rows[] = array(
             'folder' => $folder,
             'event_name' => $event_name,
