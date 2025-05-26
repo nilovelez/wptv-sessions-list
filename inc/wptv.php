@@ -32,6 +32,10 @@ function wptv_render_output($sessions, $output_type = 'google_sheets') {
         $datetime = new DateTime('@' . $session['timestamp']);
         $datetime->setTimezone($timezone);
 
+        $folder = $datetime->format('Hi') . '_' . $session['track'] . '_';
+        $name = !empty($session['speakers']) ? explode(', ', $session['speakers'])[0] : $session['title'];
+        $folder .= preg_replace('/[:\/\\\*?"<>|]/', '', explode(' ', trim($name))[0]);
+
         $output_rows[] = array(
             'date' => $datetime->format('d/m/Y'),
             'speakers' => $session['speakers'],
@@ -54,7 +58,7 @@ function wptv_render_output($sessions, $output_type = 'google_sheets') {
             // Build line with tabs as separators
             $line = "\tPending\t\t\t" . $output_row['date'] . "\t\t\t" . 
                     $output_row['speakers'] . "\t" . $output_row['title'] . "\t" .
-                    '= IF( ISBLANK(H'.$row.'), "", CONCAT(CONCAT(H'.$row.',": "), I'.$row.') )' . "\t" .
+                    '= IF( ISBLANK(H'.$row.'); &quot;&quot;; CONCAT(CONCAT(H'.$row.'; &quot;: &quot;); I'.$row.') )' . "\t" .
                     $content . "\n";
             
             $output .= $line;

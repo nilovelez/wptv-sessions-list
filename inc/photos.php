@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) {
  */
 function photos_render_output($sessions, $output_type = 'google_sheets') {
     $output = '';
+    $mkdir_commands = array();
     
     $weekdays = array(
         'Monday' => __('Monday', 'photos-sessions-list'),
@@ -52,26 +53,24 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
                 'event_name' => $event_name,
                 'event_subject' => '',
                 'speaker_name' => '',
-                'event_description' => '',
-                'mkdir' => 'mkdir ' . $event_name . ' && mkdir ' . $event_name . '/' . $folder
+                'event_description' => ''
             );
+            $mkdir_commands[] = 'mkdir ' . $event_name;
+            $mkdir_commands[] = 'mkdir ' . $event_name . '/' . $folder;
             $last_date = $session['date'];
         }
 
         $folder = $datetime->format('Hi') . '_' . $session['track'] . '_';
-        if( !empty($session['speakers'][0]) ) {
-            $folder .= explode(' ', $session['speakers'][0])[0];
-        }else{
-            $folder .= explode(' ', $session['title'])[0];
-        }
+        $name = !empty($session['speakers']) ? explode(', ', $session['speakers'])[0] : $session['title'];
+        $folder .= preg_replace('/[:\/\\\*?"<>|]/', '', explode(' ', trim($name))[0]);
         $output_rows[] = array(
             'folder' => $folder,
             'event_name' => $event_name,
             'event_subject' => $session['title'],
             'speaker_name' => $session['speakers'],
-            'event_description' => '',
-            'mkdir' => 'mkdir ' . $event_name . '/' . $folder
+            'event_description' => ''
         );
+        $mkdir_commands[] = 'mkdir ' . $event_name . '/' . $folder;
     }
     // sort output_rows by event_name and then by folder
     usort($output_rows, function($a, $b) {
@@ -89,7 +88,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $row++;
             continue;
         }
-        $output_row['event_description'] = '= IF( ISBLANK(D'.$row.'), C'.$row.', CONCAT(CONCAT(D'.$row.',": "), C'.$row.') )';
+        $output_row['event_description'] = '= IF( ISBLANK(D'.$row.'); C'.$row.'; CONCAT(CONCAT(D'.$row.';&quot;: &quot;); C'.$row.') )';
         $row++;
     }
     unset($output_row); // We clean the reference
@@ -104,10 +103,10 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $output .= $output_row['event_name'] . "\t";
             $output .= $output_row['event_subject'] . "\t";
             $output .= $output_row['speaker_name'] . "\t";
-            $output .= $output_row['event_description'] . "\t";
-            $output .= $output_row['mkdir'] . "\n";
+            $output .= $output_row['event_description'] . "\n";
         }
         $output = '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $output . '</textarea>';
+        $output = implode(" && ", $mkdir_commands) . "\n\n" . $output;
     } else {
         $output = '<table>';
         $output .= '<tr><td>//$$</td><td>Events</td><td></td><td></td></tr>';

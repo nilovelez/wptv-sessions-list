@@ -15,6 +15,7 @@
 require_once plugin_dir_path(__FILE__) . 'inc/wordcamp.php';
 require_once plugin_dir_path(__FILE__) . 'inc/wptv.php';
 require_once plugin_dir_path(__FILE__) . 'inc/photos.php';
+require_once plugin_dir_path(__FILE__) . 'inc/social.php';
 /*
 per_page=100
 page=1
