@@ -72,6 +72,9 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
         );
         $mkdir_commands[] = 'mkdir ' . $event_name . '/' . $folder;
     }
+    $mkdir_commands = implode(" && ", $mkdir_commands);
+    $mkdir_commands = '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $mkdir_commands . '</textarea>';
+
     // sort output_rows by event_name and then by folder
     usort($output_rows, function($a, $b) {
         $event_name_cmp = strcmp($a['event_name'], $b['event_name']);
@@ -106,7 +109,7 @@ function photos_render_output($sessions, $output_type = 'google_sheets') {
             $output .= $output_row['event_description'] . "\n";
         }
         $output = '<textarea rows="20" cols="100" style="width: 100%; height: 300px;" onclick="this.select();">' . $output . '</textarea>';
-        $output = implode(" && ", $mkdir_commands) . "\n\n" . $output;
+        $output = $mkdir_commands . "\n\n" . $output;
     } else {
         $output = '<table>';
         $output .= '<tr><td>//$$</td><td>Events</td><td></td><td></td></tr>';
