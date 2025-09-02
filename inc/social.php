@@ -143,8 +143,8 @@ function social_sessions_func($atts) {
     // Display input form
     ?>
     <div class="social-form-container">
-        <p>Enter a WordCamp website URL to get a list of sessions suitable for social media teams<br>
-        <p>Examples:<br>
+        <p class="wptvsl-description">Enter a WordCamp website URL to get a list of sessions suitable for social media teams<br>
+        <p class="wptvsl-example">Examples:<br>
             https://zaragoza.wordcamp.org/2025/<br>
             https://events.wordpress.org/lleida/2025/disseny/</p>
         <form method="post" action="" id="social-sessions-form" style="display: flex; flex-direction: row; gap: 10px;">
@@ -170,26 +170,30 @@ function social_sessions_func($atts) {
     }
 
     if (empty($wordcamp_url)) {
-        return 'You have to provide a valid WordCamp URL';
+        echo '<div class="wptvsl-error">You have to provide a valid WordCamp URL</div>';
+        return ob_get_clean();
     }
 
     
     // Get speakers
     $wordcamp_speakers = wordcamp_get_speakers($wordcamp_url);
     if (!$wordcamp_speakers) {
-        return 'Cannot retrieve speakers list';
+        echo '<div class="wptvsl-error">Cannot retrieve speakers list</div>';
+        return ob_get_clean();
     }
 
     // Get tracks
     $wordcamp_tracks = wordcamp_get_tracks($wordcamp_url);
     if (!$wordcamp_tracks) {
-        return 'Cannot retrieve tracks list';
+        echo '<div class="wptvsl-error">Cannot retrieve tracks list</div>';
+        return ob_get_clean();
     }
 
     // Get sessions
     $wordcamp_sessions = wordcamp_get_sessions($wordcamp_url, $wordcamp_speakers, $wordcamp_tracks);
     if (!$wordcamp_sessions) {
-        return 'Cannot retrieve sessions list';
+        echo '<div class="wptvsl-error">Cannot retrieve sessions list</div>';
+        return ob_get_clean();
     }
 
     // Render output

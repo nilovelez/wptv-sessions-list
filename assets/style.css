@@ -1,0 +1,14 @@
+.wptvsl-error{
+    background:#fff4f4;
+    color:#c1121f;
+    border:1px solid #f1c0c0;
+    padding:10px;
+    margin:10px 0;
+    border-radius:4px;
+}
+
+.wptvsl-description{
+    font-size: 110%;
+}
+.wptvsl-example{
+}

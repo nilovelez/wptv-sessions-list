@@ -16,6 +16,27 @@ require_once plugin_dir_path(__FILE__) . 'inc/wordcamp.php';
 require_once plugin_dir_path(__FILE__) . 'inc/wptv.php';
 require_once plugin_dir_path(__FILE__) . 'inc/photos.php';
 require_once plugin_dir_path(__FILE__) . 'inc/social.php';
+add_action('wp_enqueue_scripts', function() {
+    if (is_admin()) {
+        return;
+    }
+    global $post;
+    if (!$post) {
+        return;
+    }
+    $shortcodes = array('photos_sessions', 'wptv_sessions', 'social_sessions');
+    foreach ($shortcodes as $shortcode) {
+        if (has_shortcode($post->post_content, $shortcode)) {
+            wp_enqueue_style(
+                'wptv-sessions-list',
+                plugin_dir_url(__FILE__) . 'assets/style.css',
+                array(),
+                '0.1'
+            );
+            break;
+        }
+    }
+});
 /*
 per_page=100
 page=1
